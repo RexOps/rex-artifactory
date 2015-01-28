@@ -1,0 +1,1 @@
+# Artifactory Access for Rex
