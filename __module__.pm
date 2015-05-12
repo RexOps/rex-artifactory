@@ -100,15 +100,16 @@ task "download", make {
 
   my ($file_format, $file_name, $file_version);
 
+  my ($download_artifact);
+
   if( $mvn_tx->success ) {
     # there is a maven-metadata.xml, so we need to parse it to get the lastest
     # version.
     my $dom = $mvn_tx->res->dom;
-    print $mvn_tx->res->body;
 
     #my $snapshot_artifacts  = $dom->metadata->versioning->snapshotVersions;
     my ($snapshot_artifacts)  = $dom->find("metadata > versioning > snapshotVersions")->each;
-    my ($download_artifact) = sort { 
+    ($download_artifact) = sort { 
                                 my ($bo) = $b->children("value")->each;
                                 my ($ao) = $a->children("value")->each;
 
@@ -129,31 +130,44 @@ task "download", make {
   }
 
   Rex::Logger::info("Using download version: $file_version.");
-
-  # then we need to read the pom file of the artifact.
-  # with this file we can get the packaging format (jar, war, ear) and a lot of
-  # other information. currently we only read the packaging format.
-  # in the future it is also possible to read the dependencies from this file.
-  my $tx = make_artifactory_request($params->{repository},
-    $params->{package},
-    "$params->{version}/$package_name-$file_version.pom");
-
-  if( !$tx->success ) {
-    die "Error connecting to Artifactory-Server.";
-  }
-
-  my $res = $tx->res;
-
-  print $res->body;
-
   my ($package_format);
-  eval {
-    $package_format = get_packaging_from_pom($res->dom);
-    1;
-  } or do {
-    Rex::Logger::info("Found no package in $package_name->$file_version.pom file.", "warn");
-    $package_format = $ENV{config_package_format};
-  };
+
+  my $dom_ext_col = $download_artifact->children("extension");
+
+  if($dom_ext_col->size > 0) {
+    my $dom_ext = $dom_ext_col->first;
+    $package_format = $dom_ext->text;
+
+    my $dom_class_col = $download_artifact->children("classifier");
+    if($dom_class_col->size > 0) {
+      $params->{suffix} = $dom_class_col->first->text;
+    }
+  }
+  else {
+
+    # then we need to read the pom file of the artifact.
+    # with this file we can get the packaging format (jar, war, ear) and a lot of
+    # other information. currently we only read the packaging format.
+    # in the future it is also possible to read the dependencies from this file.
+    my $tx = make_artifactory_request($params->{repository},
+      $params->{package},
+      "$params->{version}/$package_name-$file_version.pom");
+
+    if( !$tx->success ) {
+      die "Error connecting to Artifactory-Server.";
+    }
+
+    my $res = $tx->res;
+
+    eval {
+      $package_format = get_packaging_from_pom($res->dom);
+      1;
+    } or do {
+      Rex::Logger::info("Found no package in $package_name->$file_version.pom file.", "warn");
+      $package_format = $ENV{config_package_format};
+    };
+
+  }
 
   if(!$package_format) {
     die "Error, no package format found.";
