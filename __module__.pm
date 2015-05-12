@@ -104,12 +104,25 @@ task "download", make {
     # there is a maven-metadata.xml, so we need to parse it to get the lastest
     # version.
     my $dom = $mvn_tx->res->dom;
-    my $snapshot_artifacts  = $dom->metadata->versioning->snapshotVersions;
-    my ($download_artifact) = sort { $b->value->text cmp $a->value->text }
-                                grep { $_->extension->text ne "pom" }   # filter out pom artifacts
+    print $mvn_tx->res->body;
+
+    #my $snapshot_artifacts  = $dom->metadata->versioning->snapshotVersions;
+    my ($snapshot_artifacts)  = $dom->find("metadata > versioning > snapshotVersions")->each;
+    my ($download_artifact) = sort { 
+                                my ($bo) = $b->children("value")->each;
+                                my ($ao) = $a->children("value")->each;
+
+                                $bo->text cmp $ao->text 
+                              }
+
+                                grep {
+                                  my @exts = $_->children("extension")->each;
+                                  $exts[0]->text ne "pom"
+                                  }   # filter out pom artifacts
                                 $snapshot_artifacts->children('snapshotVersion')->each;
 
-    $file_version = $download_artifact->value->text;
+    ($file_version) = $download_artifact->children("value")->each;
+    $file_version = $file_version->text;
   }
   else {
     $file_version = $params->{version};
@@ -130,6 +143,8 @@ task "download", make {
   }
 
   my $res = $tx->res;
+
+  print $res->body;
 
   my ($package_format);
   eval {
@@ -176,7 +191,8 @@ task "download", make {
 # document.
 sub get_packaging_from_pom {
   my ($dom) = @_;
-  my $pkg_node = $dom->project->packaging;
+  my ($pkg_node_prj) = $dom->children("project")->each;
+  my ($pkg_node) = $pkg_node_prj->children("packaging")->each;
 
   if($pkg_node) {
     return $pkg_node->text;
