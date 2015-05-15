@@ -134,7 +134,29 @@ task "download", make {
 
   my $dom_ext_col = $download_artifact->children("extension");
 
-  if($dom_ext_col->size > 0) {
+  # then we need to read the pom file of the artifact.
+  # with this file we can get the packaging format (jar, war, ear) and a lot of
+  # other information. currently we only read the packaging format.
+  # in the future it is also possible to read the dependencies from this file.
+  my $tx = make_artifactory_request($params->{repository},
+    $params->{package},
+    "$params->{version}/$package_name-$file_version.pom");
+
+  if( !$tx->success ) {
+    die "Error connecting to Artifactory-Server.";
+  }
+
+  my $res = $tx->res;
+
+  eval {
+    $package_format = get_packaging_from_pom($res->dom);
+    1;
+  } or do {
+    Rex::Logger::info("Found no package in $package_name->$file_version.pom file.", "warn");
+    $package_format = $ENV{config_package_format};
+  };
+
+  if($package_format eq "pom" && $dom_ext_col->size > 0) {
     my $dom_ext = $dom_ext_col->first;
     $package_format = $dom_ext->text;
 
@@ -142,31 +164,6 @@ task "download", make {
     if($dom_class_col->size > 0) {
       $params->{suffix} = $dom_class_col->first->text;
     }
-  }
-  else {
-
-    # then we need to read the pom file of the artifact.
-    # with this file we can get the packaging format (jar, war, ear) and a lot of
-    # other information. currently we only read the packaging format.
-    # in the future it is also possible to read the dependencies from this file.
-    my $tx = make_artifactory_request($params->{repository},
-      $params->{package},
-      "$params->{version}/$package_name-$file_version.pom");
-
-    if( !$tx->success ) {
-      die "Error connecting to Artifactory-Server.";
-    }
-
-    my $res = $tx->res;
-
-    eval {
-      $package_format = get_packaging_from_pom($res->dom);
-      1;
-    } or do {
-      Rex::Logger::info("Found no package in $package_name->$file_version.pom file.", "warn");
-      $package_format = $ENV{config_package_format};
-    };
-
   }
 
   if(!$package_format) {
