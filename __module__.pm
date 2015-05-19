@@ -129,6 +129,10 @@ task "download", make {
     $file_version = $params->{version};
   }
 
+  if(! $download_artifact ) {
+    die "Error downloading maven-metadata.xml for your version: $params->{version}.";
+  }
+
   Rex::Logger::info("Using download version: $file_version.");
   my ($package_format);
 
