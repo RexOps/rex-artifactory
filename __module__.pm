@@ -129,14 +129,17 @@ task "download", make {
     $file_version = $params->{version};
   }
 
+  my $dom_ext_col;
+  my ($package_format);
+
   if(! $download_artifact ) {
-    die "Error downloading maven-metadata.xml for your version: $params->{version}.";
+    Rex::Logger::info("Can't download maven-metadata.xml for your version: $params->{version}. Seems to be a release directory.", "warn");
+  }
+  else {
+    $dom_ext_col = $download_artifact->children("extension");
   }
 
   Rex::Logger::info("Using download version: $file_version.");
-  my ($package_format);
-
-  my $dom_ext_col = $download_artifact->children("extension");
 
   # then we need to read the pom file of the artifact.
   # with this file we can get the packaging format (jar, war, ear) and a lot of
@@ -160,7 +163,7 @@ task "download", make {
     $package_format = $ENV{config_package_format};
   };
 
-  if($package_format eq "pom" && $dom_ext_col->size > 0) {
+  if($package_format eq "pom" && $dom_ext_col && $dom_ext_col->size > 0) {
     my $dom_ext = $dom_ext_col->first;
     $package_format = $dom_ext->text;
 
