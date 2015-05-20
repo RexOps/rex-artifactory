@@ -169,12 +169,18 @@ task "download", make {
 
     my $dom_class_col = $download_artifact->children("classifier");
     if($dom_class_col->size > 0) {
-      $params->{suffix} = $dom_class_col->first->text;
+      #$params->{suffix} = $dom_class_col->first->text;
+      $params->{classifier} = $dom_class_col->first->text;
     }
   }
 
-  if(!$package_format) {
-    die "Error, no package format found.";
+  if(!$package_format || $package_format eq "pom") {
+    if(exists $params->{package_format}) {
+      $package_format = $params->{package_format};
+    }
+    else {
+      die "Error, no package format found.";
+    }
   }
 
   my $file = "$package_name-$file_version";
@@ -182,7 +188,12 @@ task "download", make {
     $file .= "-$params->{suffix}";
   }
 
+  if(exists $params->{classifier}) {
+    $file .= "-$params->{classifier}";
+  }
+
   $file .= ".$package_format";
+
 
   # after collecting all the information, we can download the artifact
   # and save it in the provided directory.
