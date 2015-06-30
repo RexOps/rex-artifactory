@@ -108,22 +108,28 @@ task "download", make {
     my $dom = $mvn_tx->res->dom;
 
     #my $snapshot_artifacts  = $dom->metadata->versioning->snapshotVersions;
-    my ($snapshot_artifacts)  = $dom->find("metadata > versioning > snapshotVersions")->each;
-    ($download_artifact) = sort { 
-                                my ($bo) = $b->children("value")->each;
-                                my ($ao) = $a->children("value")->each;
+    my $check = $dom->find("metadata > versioning > snapshotVersions");
+    if($check->each) {
+      my ($snapshot_artifacts)  = $dom->find("metadata > versioning > snapshotVersions")->each;
+      ($download_artifact) = sort { 
+                                  my ($bo) = $b->children("value")->each;
+                                  my ($ao) = $a->children("value")->each;
 
-                                $bo->text cmp $ao->text 
-                              }
+                                  $bo->text cmp $ao->text 
+                                }
 
-                                grep {
-                                  my @exts = $_->children("extension")->each;
-                                  $exts[0]->text ne "pom"
-                                  }   # filter out pom artifacts
-                                $snapshot_artifacts->children('snapshotVersion')->each;
+                                  grep {
+                                    my @exts = $_->children("extension")->each;
+                                    $exts[0]->text ne "pom"
+                                    }   # filter out pom artifacts
+                                  $snapshot_artifacts->children('snapshotVersion')->each;
 
-    ($file_version) = $download_artifact->children("value")->each;
-    $file_version = $file_version->text;
+      ($file_version) = $download_artifact->children("value")->each;
+      $file_version = $file_version->text;
+    }
+    else {
+      $file_version = $params->{version};
+    }
   }
   else {
     $file_version = $params->{version};
