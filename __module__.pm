@@ -198,7 +198,12 @@ task "download", make {
     $file .= "-$params->{classifier}";
   }
 
-  $file .= ".$package_format";
+  if(exists $params->{package_format}) {
+    $file .= "." . $params->{package_format};
+  }
+  else {
+    $file .= ".$package_format";
+  }
 
 
   # after collecting all the information, we can download the artifact
