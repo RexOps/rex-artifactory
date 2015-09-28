@@ -2,10 +2,6 @@ Name: Artifactory library
 Description: Module to access artifacory/maven repositories.
 Author: jan gehring <jan.gehring@gmail.com>
 License: perl5
-Require:
-  DM:
-    git: git@gitlab.dm-drogeriemarkt.com:lxdm/rex-dm.git
-    branch: master
 
 PerlRequire:
   - Moose
