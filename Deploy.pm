@@ -6,6 +6,7 @@ use DM::Helper;
 use DateTime;
 use Rex::Apache::Inject qw/Properties/;
 use File::Basename 'basename';
+use Certencryption;
 
 require Exporter;
 use vars qw(@EXPORT);
@@ -63,7 +64,7 @@ sub deploy {
           push @replaced, $key;
         }
         elsif(exists $options{inject}->{"$key.enc"}) {
-          my $new_line = "$key=" . decrypt_string( $options{inject}->{"$key.enc"} ) . "\n";
+          my $new_line = "$key=" . decrypt( $options{inject}->{"$key.enc"} ) . "\n";
           $new_line >> io("$config_file_path.new");
           push @replaced, $key;
         }
