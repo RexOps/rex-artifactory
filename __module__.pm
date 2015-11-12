@@ -90,6 +90,8 @@ task "download", make {
   die "No location given where the download should be saved. (Parameter: --to=)"
     if ! exists $params->{to};
 
+  $params->{package} =~ s/\//./g;
+
   my ($package_name) = ($params->{package} =~ m/\.([^\.]+)$/);
 
   # in the very first step, we need to check if there is a maven-metadata.xml
