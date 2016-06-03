@@ -49,6 +49,7 @@ use Rex::Commands;
 use Data::Dumper;
 use Mojo::UserAgent;
 use Carp;
+use DM;
 
 desc "List the available versions of an artifact.";
 task "list", make {
