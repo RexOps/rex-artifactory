@@ -45,7 +45,6 @@ To download an artifact use this command:
 =cut
 
 use Rex::Commands;
-use DM;
 
 use Data::Dumper;
 use Mojo::UserAgent;
