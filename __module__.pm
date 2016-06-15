@@ -49,7 +49,6 @@ use Rex::Commands;
 use Data::Dumper;
 use Mojo::UserAgent;
 use Carp;
-use DM;
 
 desc "List the available versions of an artifact.";
 task "list", make {
@@ -77,7 +76,7 @@ task "list", make {
 };
 
 desc "Download an artifact from artifactory.";
-task "download", make {
+sub download {
   my $params = shift;
 
   # there is a download-size protection in the library at 10MB
@@ -222,8 +221,10 @@ task "download", make {
     die "Error downloading file ($file).";
   }
 
-  return $file;
-};
+  return $file;  
+}
+
+task "download", \&download;
 
 # get the type of the archive.
 # for example: war, jar, ear
@@ -247,11 +248,11 @@ sub make_artifactory_request {
   my ($repository, $package, $url) = @_;
   my $package_path = get_package_path($package);
 
-  my $art_url   = config()->{artifactory}->{host};
-  my $art_user  = config()->{artifactory}->{user};
-  my $art_pass  = config()->{artifactory}->{password};
-  my $art_path  = config()->{artifactory}->{path} || "artifactory";
-  my $art_proto = config()->{artifactory}->{proto} || "http";
+  my $art_url   = get("artifactory")->{host};
+  my $art_user  = get("artifactory")->{user};
+  my $art_pass  = get("artifactory")->{password};
+  my $art_path  = get("artifactory")->{path} || "artifactory";
+  my $art_proto = get("artifactory")->{proto} || "http";
 
   die "No artifactory url configured in configuration file."      if ! $art_url;
   die "No artifactory user configured in configuration file."     if ! $art_user;
